@@ -877,24 +877,6 @@ ip route 0.0.0.0 0.0.0.0 203.0.113.1
 | srv-dns.technova.local | A | 192.168.10.2 |
 | ftp.technova.local | A | 192.168.10.3 |
 
-### 10.9 Plan de test
-
-| Test | Depuis | Vers | Résultat attendu |
-|------|--------|------|-----------------|
-| DHCP Marketing | PC Marketing | — | IP 192.168.20.x |
-| DHCP CQ | PC CQ | — | IP 192.168.30.x |
-| DHCP Production | PC Production | — | IP 192.168.40.x |
-| Ping Serveurs | PC Marketing | 192.168.10.254 | ✅ OK |
-| Ping Serveurs | PC CQ | 192.168.10.254 | ✅ OK |
-| Ping Serveurs | PC Production | 192.168.10.254 | ❌ Bloqué |
-| Ping CQ depuis Marketing | PC Marketing | 192.168.30.x | ❌ Bloqué |
-| Ping Marketing depuis CQ | PC CQ | 192.168.20.x | ❌ Bloqué |
-| FTP | PC Marketing | 192.168.10.3 | ✅ OK |
-| FTP | PC Production | 192.168.10.3 | ❌ Bloqué |
-| Ping Internet | PC Marketing | 8.8.8.8 | ✅ OK (via NAT) |
-| Ping Internet | PC Production | 8.8.8.8 | ❌ Bloqué |
-| SSH Admin | PC Serveurs | Routeur | ✅ OK |
-| SSH Admin | PC Marketing | Routeur | ❌ Bloqué |
 
 
 
