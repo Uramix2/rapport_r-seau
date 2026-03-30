@@ -15,7 +15,8 @@
 6. [Outils d'administration et monitoring](#6-outils-dadministration-et-de-monitoring)
 7. [Mesures de sécurité](#7-mesures-de-sécurité-mises-en-place)
 8. [Techniques d'optimisation](#8-techniques-doptimisation)
-9. [Implémentation Cisco Packet Tracer 9.0](#9-implémentation-cisco-packet-tracer-90)
+9. [IPSec — Tunneling et Chiffrage de bout en bout](#9-ipsec--tunneling-et-chiffrage-de-bout-en-bout)
+10. [Implémentation Cisco Packet Tracer 9.0](#10-implémentation-cisco-packet-tracer-90)
 
 ---
 
@@ -102,42 +103,38 @@ La topologie "Bis" adoptée offre :
 
 | Liaison | Réseau | R-gauche | R-droite |
 |---------|--------|----------|----------|
-| R1_bis ↔ R5_bis | 10.0.6.0/30 | .1 (Gi2) | .2 (Gi1) |
-| R1_bis ↔ R3_bis | 10.0.3.0/30 | .1 (Gi3) | .2 (Gi1) |
-| R1_bis ↔ R2_bis | 10.0.4.0/30 | .1 (Gi5) | .2 (Gi3) |
-| R1_bis ↔ pfSense1 | 10.0.7.0/30 | .1 (Gi4) | — |
-| R2_bis ↔ R3_bis | 10.0.2.0/30 | .1 (Gi4) | .2 (Gi3) |
-| R3_bis ↔ R4_bis | 10.0.1.0/30 | .1 (Gi2) | .2 (Gi1) |
-| R3_bis ↔ R5_bis | 10.0.5.0/30 | .1 (Gi6) | .2 (Gi4) |
-| R5_bis ↔ pfSense4 | 10.0.8.0/30 | .1 (Gi5) | — |
+| R1_bis ↔ R2_bis | 10.0.4.0/30 | .1 (Gi0/0) | .2 (Gi0/0) |
+| R1_bis ↔ R5_bis | 10.0.6.0/30 | .1 (Gi0/1) | .2 (Gi0/0) |
+| R2_bis ↔ R3_bis | 10.0.2.0/30 | .1 (Gi0/1) | .2 (Gi0/1) |
+| R3_bis ↔ R4_bis | 10.0.1.0/30 | .1 (Gi0/0) | .2 (Gi0/0) |
+| R1_bis ↔ pfSense 2.5.2-1 | 203.0.114.0/30 | .1 (Gi0/3) | — |
+| R5_bis ↔ pfSense 2.5.2-4 | 203.0.113.0/30 | .1 (Gi0/1) | .2 (FAI) |
 
 ### 3.3 Détail des routeurs
 
 #### R1_bis — Passerelle Siège Paris
 
-Ce routeur gère l'accès Marketing et la sortie WAN principale via pfSense 2.5.2-1.
+Gère l'accès Marketing et la sortie WAN principale via pfSense 2.5.2-1.
 
 ```
-Interface          IP              Rôle
-GigabitEthernet1   192.168.20.254  Passerelle VLAN Marketing
-GigabitEthernet2   10.0.6.1        Lien vers R5_bis
-GigabitEthernet3   10.0.3.1        Lien vers R3_bis (Pivot)
-GigabitEthernet4   10.0.7.1        Lien vers pfSense 2.5.2-1 (WAN)
-GigabitEthernet5   10.0.4.1        Lien vers R2_bis
+Interface              IP              Rôle
+GigabitEthernet0/0     10.0.4.1        Lien vers R2_bis
+GigabitEthernet0/1     10.0.6.1        Lien vers R5_bis
+GigabitEthernet0/2     192.168.20.254  Passerelle VLAN Marketing
+GigabitEthernet0/3     203.0.114.1     Lien vers pfSense 2.5.2-1 (WAN principal)
 ```
 
 ![R1_bis — GNS3](images/Pasted%20image%2020260323114304.png)
 
-#### R2_bis — Passerelle Zone Serveurs (Catalyst 8000v)
+#### R2_bis — Passerelle Zone Serveurs
 
-Point d'entrée principal pour les serveurs DHCP/DNS. Modèle Catalyst 8000v (interfaces Gi1–Gi4).
+Point d'entrée principal pour les serveurs DHCP/DNS.
 
 ```
-Interface          IP              Rôle
-GigabitEthernet1   192.168.10.254  Passerelle VLAN Serveurs
-GigabitEthernet2   192.168.20.254  Lien redondant Marketing
-GigabitEthernet3   10.0.4.2        Lien vers R1_bis
-GigabitEthernet4   10.0.2.1        Lien vers R3_bis
+Interface              IP              Rôle
+GigabitEthernet0/0     10.0.4.2        Lien vers R1_bis
+GigabitEthernet0/1     10.0.2.1        Lien vers R3_bis
+GigabitEthernet0/2     192.168.10.254  Passerelle VLAN Serveurs
 ```
 
 ![R2_bis — GNS3](images/Pasted%20image%2020260325232236.png)
@@ -147,13 +144,10 @@ GigabitEthernet4   10.0.2.1        Lien vers R3_bis
 Hub d'interconnexion majeur. Relie toutes les zones entre elles.
 
 ```
-Interface          IP              Rôle
-GigabitEthernet1   10.0.3.2        Lien vers R1_bis
-GigabitEthernet2   10.0.1.1        Lien vers R4_bis
-GigabitEthernet3   10.0.2.2        Lien vers R2_bis
-GigabitEthernet4   192.168.10.254  Zone Serveurs (redondant)
-GigabitEthernet6   10.0.5.1        Lien vers R5_bis
-GigabitEthernet7   192.168.30.254  Passerelle VLAN Contrôle Qualité
+Interface              IP              Rôle
+GigabitEthernet0/0     10.0.1.1        Lien vers R4_bis
+GigabitEthernet0/1     10.0.2.2        Lien vers R2_bis
+GigabitEthernet0/2     192.168.30.253  Passerelle VLAN Contrôle Qualité (secondaire)
 ```
 
 ![R3_bis — GNS3](images/Pasted%20image%2020260324105343.png)
@@ -163,25 +157,25 @@ GigabitEthernet7   192.168.30.254  Passerelle VLAN Contrôle Qualité
 Gère les zones Production et Logistique du site Paris.
 
 ```
-Interface          IP              Rôle
-GigabitEthernet1   10.0.1.2        Lien vers R3_bis
-GigabitEthernet2   192.168.50.254  Passerelle VLAN Logistique
-GigabitEthernet3   192.168.40.254  Passerelle VLAN Production
-GigabitEthernet4   192.168.10.254  Zone Serveurs (redondant)
+Interface              IP              Rôle
+GigabitEthernet0/0     10.0.1.2        Lien vers R3_bis
+GigabitEthernet0/1     192.168.40.254  Passerelle VLAN Production
+GigabitEthernet0/2     192.168.10.253  Zone Serveurs (passerelle secondaire)
 ```
+
+> Note : En GNS3 R4_bis gérait aussi le VLAN Logistique (192.168.50.254). En PT cette interface est absente (limitation 3 ports du 2911).
 
 ![R4_bis — GNS3](images/Pasted%20image%2020260324104410.png)
 
 #### R5_bis — Sortie WAN 2
 
-Assure la redondance WAN via pfSense 2.5.2-4, et partage la passerelle Contrôle Qualité avec R3_bis.
+Assure la redondance WAN via pfSense 2.5.2-4 et partage la passerelle Contrôle Qualité avec R3_bis.
 
 ```
-Interface          IP              Rôle
-GigabitEthernet1   10.0.6.2        Lien vers R1_bis
-GigabitEthernet2   192.168.30.254  Passerelle VLAN Contrôle Qualité (redond.)
-GigabitEthernet4   10.0.5.2        Lien vers R3_bis
-GigabitEthernet5   10.0.8.1        Lien vers pfSense 2.5.2-4 (WAN)
+Interface              IP              Rôle
+GigabitEthernet0/0     10.0.6.2        Lien vers R1_bis
+GigabitEthernet0/1     203.0.113.1     Lien vers pfSense 2.5.2-4 (WAN redondant)
+GigabitEthernet0/2     192.168.30.254  Passerelle VLAN Contrôle Qualité (principal)
 ```
 
 ![R5_bis — GNS3](images/Pasted%20image%2020260324105844.png)
@@ -221,7 +215,7 @@ router ospf 1
  network 192.168.20.0 0.0.0.255 area 0
  network 10.0.6.0 0.0.0.3 area 0
  network 10.0.3.0 0.0.0.3 area 0
- network 10.0.7.0 0.0.0.3 area 0
+ network 203.0.114.0 0.0.0.3 area 0
  network 10.0.4.0 0.0.0.3 area 0
  default-information originate
 ```
@@ -270,7 +264,7 @@ router ospf 1
  router-id 5.5.5.5
  network 10.0.6.0 0.0.0.3 area 0
  network 10.0.5.0 0.0.0.3 area 0
- network 10.0.8.0 0.0.0.3 area 0
+ network 203.0.113.0 0.0.0.3 area 0
  network 192.168.30.0 0.0.0.255 area 0
  default-information originate
 ```
@@ -288,26 +282,26 @@ Les switches Cisco IOSvL2 segmentent le réseau par département.
 #### Switch Contrôle Qualité (CiscoIOSvL2-2)
 
 ```ios
-vlan 40
+vlan 30
  name Controle_Qualite
 
 interface GigabitEthernet0/0
  switchport trunk encapsulation dot1q
  switchport mode trunk
- switchport trunk allowed vlan 40,50
+ switchport trunk allowed vlan 30
 
 interface GigabitEthernet0/1
  switchport trunk encapsulation dot1q
  switchport mode trunk
- switchport trunk allowed vlan 40,50
+ switchport trunk allowed vlan 30
 
 interface GigabitEthernet0/2
  switchport mode access
- switchport access vlan 40
+ switchport access vlan 30
 
 interface GigabitEthernet1/0
  switchport mode access
- switchport access vlan 40
+ switchport access vlan 30
 ```
 
 ![Switch CQ — VLAN](images/Pasted%20image%2020260323120833.png)
@@ -342,6 +336,21 @@ interface GigabitEthernet0/1
  ip access-group ACL_PROD_VERS_SERV in
 ```
 
+**Vérification — `show ip access-lists ACL_PROD_VERS_SERV` :**
+
+```
+R4_bis#show ip access-lists ACL_PROD_VERS_SERV
+Extended IP access list ACL_PROD_VERS_SERV
+    permit udp any host 192.168.10.254 eq bootps
+    permit udp any host 192.168.10.254 eq bootpc
+    permit udp any host 192.168.10.254 eq domain
+    permit tcp any host 192.168.10.254 eq domain
+    deny tcp any host 192.168.10.3 eq ftp
+    deny tcp any host 192.168.10.3 eq 20
+    deny ip any 192.168.0.0 0.0.255.255
+    deny ip any any
+```
+
 #### ACL Marketing — accès Serveurs + Internet, isolée des autres VLANs (R1_bis:Gi0/2)
 
 ```ios
@@ -358,6 +367,20 @@ interface GigabitEthernet0/2
  ip access-group ACL_MARKETING in
 ```
 
+**Vérification — `show ip access-lists ACL_MARKETING` :**
+
+```
+R1_bis#show ip access-lists ACL_MARKETING
+Extended IP access list ACL_MARKETING
+    permit udp any host 192.168.10.254 eq bootps
+    permit udp any host 192.168.10.254 eq bootpc
+    permit udp any host 192.168.10.254 eq domain
+    permit tcp any host 192.168.10.254 eq domain
+    permit ip any 192.168.10.0 0.0.0.255
+    deny ip any 192.168.0.0 0.0.255.255
+    permit ip any any
+```
+
 #### ACL CQ — accès Serveurs + Internet, isolée des autres VLANs (R5_bis:Gi0/2 et R3_bis:Gi0/2)
 
 ```ios
@@ -372,6 +395,20 @@ ip access-list extended ACL_CQ
 
 interface GigabitEthernet0/2
  ip access-group ACL_CQ in
+```
+
+**Vérification — `show ip access-lists ACL_CQ` :**
+
+```
+R5_bis#show ip access-lists ACL_CQ
+Extended IP access list ACL_CQ
+    permit udp any host 192.168.10.254 eq bootps
+    permit udp any host 192.168.10.254 eq bootpc
+    permit udp any host 192.168.10.254 eq domain
+    permit tcp any host 192.168.10.254 eq domain
+    permit ip any 192.168.10.0 0.0.0.255
+    deny ip any 192.168.0.0 0.0.255.255
+    permit ip any any
 ```
 
 **Synthèse des politiques d'accès par VLAN :**
@@ -398,12 +435,21 @@ line vty 0 4
  login local
 ```
 
+**Vérification — `show ip access-lists ACL_ADMIN` :**
+
+```
+R1_bis#show ip access-lists ACL_ADMIN
+Standard IP access list ACL_ADMIN
+    permit 192.168.10.0 0.0.0.255
+    deny any log
+```
+
 ### 4.4 Pare-feu pfSense
 
 Deux instances pfSense 2.5.2 assurent la sécurité périmétrique :
 
-- **pfSense 2.5.2-1** (lié à R1_bis, 10.0.7.0/30) : sortie WAN principale du siège Paris
-- **pfSense 2.5.2-4** (lié à R5_bis, 10.0.8.0/30) : sortie WAN de secours
+- **pfSense 2.5.2-1** (lié à R1_bis:Gi0/3, 203.0.114.0/30 — R1_bis = 203.0.114.1) : sortie WAN principale du siège Paris
+- **pfSense 2.5.2-4** (lié à R5_bis:Gi0/1, 203.0.113.0/30 — R5_bis = 203.0.113.1) : sortie WAN de secours
 
 Chaque pfSense applique :
 - Filtrage du trafic entrant/sortant (stateful firewall)
@@ -530,7 +576,7 @@ L'architecture suit le principe de **défense en profondeur** :
 
 ### 8.2 Redondance et basculement automatique
 
-- **Double chemin vers les serveurs** : R2_bis, R3_bis et R4_bis ont tous une interface sur 192.168.10.0/24
+- **Double chemin vers les serveurs** : R2_bis (principal, .254) et R4_bis (secondaire, .253) ont une interface sur 192.168.10.0/24
 - **Double WAN** : si R1_bis perd sa connexion pfSense, le trafic Internet passe par R5_bis
 - **Double passerelle CQ** : R3_bis (.253) et R5_bis (.254) peuvent tous deux servir de gateway
 
@@ -543,23 +589,45 @@ L'utilisation de **/30** pour tous les liens inter-routeurs permet de :
 
 ---
 
-## 9. Implémentation Cisco Packet Tracer 9.0
+## 9. IPSec — Tunneling et Chiffrage de bout en bout
 
-### 9.1 Adaptations GNS3 → Packet Tracer
+Pour la partie firewall, nous avons opté pour une redondance avec des firewalls en croix qui permetteront de créer une infrastructure IPSec entre les deux sites.
 
-Le passage de GNS3 (routeurs multi-interfaces IOS-XE) à Packet Tracer (2911 limité à 3 ports built-in) a nécessité les simplifications suivantes :
+Avec une partie WAN pour la jonction et LAN pour l'utilisation en entreprise, cette technologie est efficace pour l'optimisation et la sécurité (Partie autorisations du Firewall).
 
-| Élément GNS3 | Adaptation PT |
-|---|---|
-| C7200 / Catalyst 8000v (6-7 interfaces) | Cisco 2911 (3 ports Gi0/0–Gi0/2) |
-| pfSense 2.5.2 (double WAN) | FAI_Router simulant Internet (Loopback 8.8.8.8) |
-| CiscoIOSvL2 (L3 switch, trunk dot1q) | 2960-24TT (L2 switch, access VLAN) |
-| R3_bis pivot (7 interfaces) | R3_bis simplifié (3 interfaces) |
-| Redondance 3 passerelles Serveurs | R2_bis principal + R4_bis secondaire |
-| R1_bis ↔ R3_bis direct | Supprimé (R1 manque de ports) |
-| SW_Logistique (VLAN 50) | Non connecté — R4_bis n'a plus de port disponible (limitation 2911, 3 ports max) |
+De plus, deux clients non connectés directement au réseau qui peuvent communiquer entre eux accroît la sécurité de l'entreprise.
 
-### 9.2 Mapping des interfaces PT
+### Sécurité et optimisations
+
+Cette technologie est particulièrement efficace pour l'optimisation des flux et de la sécurité. Grâce au moteur de filtrage du pare-feu pfSense, nous pouvons définir des politiques d'accès strictes (ACL) pour n'autoriser que les protocoles nécessaires (ex : ICMP pour le diagnostic, HTTPS pour les applications).
+
+**Avantages de l'isolation**
+
+Le fait de permettre à deux clients, initialement non connectés directement, de communiquer de manière transparente via un tunnel chiffré accroît considérablement la sécurité périmétrique. L'absence d'exposition directe sur l'Internet public pour ces segments LAN réduit drastiquement la surface d'attaque de l'entreprise.
+
+### Détails de construction
+
+| Paramètre | pfSense 1 | pfSense 2 |
+|-----------|-----------|-----------|
+| WAN | 192.168.122.9/24 | 192.168.122.127/24 |
+| LAN | 192.168.100.254/24 | 192.168.200.254/24 |
+| Hashage | SHA256 | SHA256 |
+| Protocole | ESP (AES-GCM 128) | ESP (AES-GCM 128) |
+| Chiffrement Phase 1 | AES-CBC 128 / HMAC-SHA256 | AES-CBC 128 / HMAC-SHA256 |
+| DH Group | MODP_2048 | MODP_2048 |
+| IKE | IKEv2 | IKEv2 (Responder) |
+
+**Statut IPSec — les deux tunnels établis :**
+
+![IPSec Status — pfSense 1 & 2](images/ipsec_status.png)
+
+Le statut **Established** sur les deux pfSense confirme que les tunnels IKEv2 sont actifs et que le trafic inter-sites transite bien de façon chiffrée.
+
+---
+
+## 10. Implémentation Cisco Packet Tracer 9.0
+
+### 10.1 Mapping des interfaces PT
 
 | Routeur | Interface PT | IP | Connecté à |
 |---------|-------------|-----|-----------|
@@ -579,7 +647,7 @@ Le passage de GNS3 (routeurs multi-interfaces IOS-XE) à Packet Tracer (2911 lim
 | R5_bis | Gi0/1 | 203.0.113.1/30 | FAI_Router:Gi0/0/0 |
 | R5_bis | Gi0/2 | 192.168.30.254/24 | SW_CQ:Gi0/2 |
 
-### 9.3 Commandes OSPF — Packet Tracer
+### 10.2 Commandes OSPF — Packet Tracer
 
 #### R1_bis
 
@@ -681,7 +749,7 @@ router ospf 1
  default-information originate
 ```
 
-### 9.4 Configuration VLAN Packet Tracer
+### 10.3 Configuration VLAN Packet Tracer
 
 Les switches 2960-24TT en PT ne supportent pas `encapsulation dot1q`. L'uplink vers le routeur est configuré en **access** dans le même VLAN que les PCs.
 
@@ -743,11 +811,11 @@ interface GigabitEthernet0/1
  switchport access vlan 20
 ```
 
-### 9.5 ACLs Packet Tracer
+### 10.4 ACLs Packet Tracer
 
 Voir section [4.3](#43-acls--mesures-de-sécurité-réseau) pour le détail complet des ACLs.
 
-### 9.6 DHCP relay (ip helper-address)
+### 10.5 DHCP relay (ip helper-address)
 
 SRV_DHCP (192.168.10.1) centralise tous les pools. Les routeurs relayent les requêtes DHCP.
 
@@ -760,7 +828,7 @@ SRV_DHCP (192.168.10.1) centralise tous les pools. Les routeurs relayent les req
 | VLAN30_CQ | 192.168.30.254 | 192.168.30.10 | 192.168.10.2 | 255.255.255.0 |
 | VLAN40_Production | 192.168.40.254 | 192.168.40.10 | 192.168.10.2 | 255.255.255.0 |
 
-### 9.7 NAT/PAT — Accès Internet (R5_bis)
+### 10.6 NAT/PAT — Accès Internet (R5_bis)
 
 ```ios
 ip access-list standard NAT_INSIDE
@@ -791,7 +859,7 @@ interface Loopback0
 ip route 0.0.0.0 0.0.0.0 203.0.113.1
 ```
 
-### 9.8 SRV_Misc — Serveur FTP (192.168.10.3)
+### 10.7 SRV_Misc — Serveur FTP (192.168.10.3)
 
 - IP statique : `192.168.10.3 / 255.255.255.0`, gateway `192.168.10.254`
 - Service FTP : **ON** (Server-PT → Services → FTP)
@@ -799,7 +867,7 @@ ip route 0.0.0.0 0.0.0.0 203.0.113.1
 - Accessible depuis : Marketing, CQ, Serveurs
 - **Bloqué depuis Production** (ACL_PROD_VERS_SERV)
 
-### 9.9 SRV_DNS — Résolution interne (192.168.10.2)
+### 10.8 SRV_DNS — Résolution interne (192.168.10.2)
 
 **Enregistrements DNS (Server-PT → Services → DNS) :**
 
@@ -810,7 +878,7 @@ ip route 0.0.0.0 0.0.0.0 203.0.113.1
 | srv-misc.technova.local | A | 192.168.10.3 |
 | ftp.technova.local | A | 192.168.10.3 |
 
-### 9.10 Plan de test
+### 10.9 Plan de test
 
 | Test | Depuis | Vers | Résultat attendu |
 |------|--------|------|-----------------|
