@@ -875,7 +875,6 @@ ip route 0.0.0.0 0.0.0.0 203.0.113.1
 |-----|------|--------|
 | srv-dhcp.technova.local | A | 192.168.10.1 |
 | srv-dns.technova.local | A | 192.168.10.2 |
-| srv-misc.technova.local | A | 192.168.10.3 |
 | ftp.technova.local | A | 192.168.10.3 |
 
 ### 10.9 Plan de test
